@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <style>
+        html {
+            font-family: sans-serif;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="question">
+        <h1 id="qhead"></h1>
+        <div id="btn-box"></div>
+    </div>
+    <div class="answer">
+        <div class="result"></div>
+        <div class="answer-text"></div>
+    </div>
+    <script src="./socket.io.js"></script>
+    <script>
+        const socket = io();
+        socket.emit('start', 0);
+        const qhead = document.getElementById('qhead')
+        const buttonbox = document.getElementById('btn-box')
+        const questionbox = document.querySelector('.question')
+        const answerbox = document.querySelector('.answer')
+        const resultbox = document.querySelector('.result')
+        const answertext = document.querySelector('.answer-text')
+        var playerChoice;
+
+        function addQuestion(question) {
+            qhead.textContent = question.question;
+            for (let option of question.options) {
+                addButton(option)
+            }
+        }
+
+        function addButton(option) {
+            btn = document.createElement('button')
+            btn.className = 'option-' + option
+            btn.textContent = option
+            btn.onclick = () => submit(option)
+            buttonbox.appendChild(btn)
+        }
+
+        function submit(option) {
+            selected = option
+            let me = document.querySelector('.option-' + option)
+            for (let btn of document.querySelectorAll('.option')) {
+                btn.className = 'option-' + btn.textContent
+            }
+            me.className += " selected"
+
+            socket.emit('response-answer', option)
+                // questionbox.remove()
+        }
+
+        socket.on('question', (question) => {
+            addQuestion(question)
+            console.log('got question')
+        })
+
+        socket.on('answer', (answer) => {
+            let correct = answer.answer == playerChoice;
+            answerbox.style.backgound = correct ? "green" : "red"
+            resultbox.textContent = correct ? "Correct!" : "Wrong!"
+            answertext.textContent = answer.answer
+        })
+    </script>
+</body>
+
+</html
