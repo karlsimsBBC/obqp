@@ -5,99 +5,162 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
     <style>
+         :root {
+            --green: #2E86AB;
+            --pink: #A23B72;
+            --beige: #FFF0E7FF;
+            --purple: #372549;
+            --lavender: #9F84BD;
+        }
+        
         html {
-            background-color: #111;
             font-family: sans-serif;
+            background-color: var(--purple);
             color: #fff;
+        }
+        
+        header {
+            padding: 16px 24px;
+            background-color: white;
+            -webkit-box-shadow: 0px 6px 12px 0px rgba(0, 0, 0, 0.23);
+            -moz-box-shadow: 0px 6px 12px 0px rgba(0, 0, 0, 0.23);
+            box-shadow: 0px 6px 12px 0px rgba(0, 0, 0, 0.23);
+        }
+        
+        * {
+            box-sizing: border-box;
         }
         
         body {
             margin: 0;
-            text-align: center;
+            min-height: 100vh;
         }
         
-        video {
-            max-width: 100%;
+        .question,
+        .answer {
+            padding: 24px;
+            max-width: 600px;
+            margin: auto;
+        }
+        
+        h1 {
+            color: white;
+            font-size: 36px;
+            margin: 0;
+            margin-bottom: 24px;
+            font-weight: 400;
+            line-height: 1.3;
+        }
+        
+        button {
+            display: block;
+            outline: none;
+            padding: 17px;
+            margin-bottom: 16px;
+            width: 100%;
+            cursor: pointer;
+            font-size: 20px;
+            background: var(--pink);
+            color: white;
+            border-radius: 4px;
+            outline: none;
+            letter-spacing: 1px;
+            border: none;
+            text-transform: uppercase;
+        }
+        
+        button.selected {
+            background-color: var(--green);
+        }
+        
+        .answer {
+            display: none;
         }
     </style>
-    <title>Document</title>
 </head>
 
 <body>
-    <video id="videoPlayer" controls="false">
-        <source src="./media/eggheads.mp4" type="video/mp4">
-    </video>
-    <div class="results">
-
+    <header>
+        <img src="media/bbcq.png" />
+    </header>
+    <div class="question">
+        <h1 id="qhead">Waiting for question...</h1>
+        <div id="btn-box"></div>
     </div>
-
+    <div class="answer">
+        <h1 class="result">
+        </h1>
+        <h1 class="answer-text">
+        </h1>
+    </div>
     <script src="./socket.io.js"></script>
     <script>
-        const player = document.getElementById('videoPlayer')
-        const resultsDiv = document.querySelector('.results')
-        var scanIt;
         const socket = io();
         socket.emit('start', 0);
+        const qhead = document.getElementById('qhead')
+        const buttonbox = document.getElementById('btn-box')
+        const questionbox = document.querySelector('.question')
+        const answerbox = document.querySelector('.answer')
+        const resultbox = document.querySelector('.result')
+        const answertext = document.querySelector('.answer-text')
+        var playerChoice;
 
-        const questions = [{
-            "trigger": 9,
-            "question": "The Bay State and the Old Colony are nicknames for which US state?",
-            "options": ["Massachusetts", "California", "Utah"]
-        }]
-
-        const results = {
-            "Massachusetts": 0,
-            "California": 0,
-            "Utah": 0
+        function addQuestion(question) {
+            qhead.textContent = question.question;
+            for (let option of question.options) {
+                addButton(option)
+            }
         }
 
-        let question = questions[0]
+        function addButton(option) {
+            btn = document.createElement('button')
+            btn.className = 'option-' + option
+            btn.textContent = option
+            btn.onclick = () => submit(option)
+            buttonbox.appendChild(btn)
+        }
 
-        player.addEventListener('play', () => {
-            console.log('playing')
-            scanIt = setInterval(function() {
-                let t = Math.round(player.currentTime);
-                if (t == question.trigger) {
-                    sendQuestion()
-                }
-                console.log(t)
-            }, 1000)
+        function submit(option) {
+            selected = option
+            let me = document.querySelector('.option-' + option)
+            for (let btn of document.querySelectorAll('button')) {
+                btn.className = 'option-' + btn.textContent
+            }
+            me.className += " selected"
+            playerChoice = option;
+            socket.emit('response-answer', option)
+                // questionbox.remove()
+        }
+
+        socket.on('question', (question) => {
+            addQuestion(question)
+            console.log('got question')
         })
 
-        function sendQuestion() {
-            socket.emit('queue-question', question)
-            player.pause()
-            setTimeout(() => {
-                player.play()
-                console.log('sending answer')
-                sendAnswer()
-            }, 5000);
-        }
+        socket.on('answer', (answer) => {
 
-        function sendAnswer() {
-            socket.emit('queue-answer', {
-                answer: 'Massachusetts'
-            })
-        }
+            questionbox.style.display = "none";
+            answerbox.style.display = "block";
+            let correct = answer.answer == playerChoice;
 
-        player.addEventListener('pause', () => {
-            clearInterval(scanIt)
+            if (playerChoice === undefined) {
+                resultbox.textContent = "Timed out!"
+            } else {
+                resultbox.textContent = correct ? "Correct!" : "Wrong!"
+            }
+            document.body.style.backgroundColor = correct ? "#2E86AB" : "#A23B72"
+            answertext.textContent = `Answer: ${answer.answer}`
         })
 
-        socket.on('user-response', (option) => {
-            console.log('user response')
-            updateResults(option)
-        })
 
-        function updateResults(option) {
-            results[option] += 1
-            resultsDiv.textContent =
-                `California: ${results.California} 
-                 Massachusetts: ${results.Massachusetts} 
-                 Utah: ${results.Utah}`
-        }
+        // addQuestion({
+        //     "trigger": 9,
+        //     "question": "The Bay State and the Old Colony are nicknames for which US state?",
+        //     "options": ["Massachusetts", "California", "Utah"]
+        // })
     </script>
 </body>
 
-</html>
+</ht

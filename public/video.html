@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <style>
+        html {
+            background-color: #111;
+            font-family: sans-serif;
+            color: #fff;
+        }
+        
+        body {
+            margin: 0;
+            text-align: center;
+        }
+        
+        video {
+            max-width: 100%;
+        }
+    </style>
+    <title>Document</title>
+</head>
+
+<body>
+    <video id="videoPlayer" controls="false">
+        <source src="./media/eggheads.mp4" type="video/mp4">
+    </video>
+    <div class="results">
+
+    </div>
+
+    <script src="./socket.io.js"></script>
+    <script>
+        const player = document.getElementById('videoPlayer')
+        const resultsDiv = document.querySelector('.results')
+        var scanIt;
+        const socket = io();
+        socket.emit('start', 0);
+
+        const questions = [{
+            "trigger": 9,
+            "question": "The Bay State and the Old Colony are nicknames for which US state?",
+            "options": ["Massachusetts", "California", "Utah"]
+        }]
+
+        const results = {
+            "Massachusetts": 0,
+            "California": 0,
+            "Utah": 0
+        }
+
+        let question = questions[0]
+
+        player.addEventListener('play', () => {
+            console.log('playing')
+            scanIt = setInterval(function() {
+                let t = Math.round(player.currentTime);
+                if (t == question.trigger) {
+                    sendQuestion()
+                }
+            }, 1000)
+        })
+
+        function sendQuestion() {
+            socket.emit('queue-question', question)
+            player.pause()
+            setTimeout(() => {
+                player.play()
+                console.log('sending answer')
+                sendAnswer()
+            }, 5000);
+        }
+
+        function sendAnswer() {
+            socket.emit('queue-answer', {
+                answer: 'Massachusetts'
+            })
+        }
+
+        player.addEventListener('pause', () => {
+            clearInterval(scanIt)
+        })
+
+        socket.on('user-response', (option) => {
+            console.log('user response')
+            updateResults(option)
+        })
+
+        function updateResults(option) {
+            results[option] += 1
+            resultsDiv.textContent =
+                `California: ${results.California} 
+                 Massachusetts: ${results.Massachusetts} 
+                 Utah: ${results.Utah}`
+        }
+    </script>
+</body>
+
+</html>
