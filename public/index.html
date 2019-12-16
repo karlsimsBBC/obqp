@@ -49,7 +49,6 @@
             color: white;
             font-size: 36px;
             margin: 0;
-            margin-bottom: 24px;
             font-weight: 400;
             line-height: 1.3;
         }
@@ -78,6 +77,12 @@
         .answer {
             display: none;
         }
+        
+        #countdown {
+            text-align: right;
+            line-height: 32px;
+            font-size: 20px;
+        }
     </style>
 </head>
 
@@ -87,6 +92,7 @@
     </header>
     <div class="question">
         <h1 id="qhead">Waiting for question...</h1>
+        <div id="countdown"></div>
         <div id="btn-box"></div>
     </div>
     <div class="answer">
@@ -136,6 +142,7 @@
 
         socket.on('question', (question) => {
             addQuestion(question)
+            countdown()
             console.log('got question')
         })
 
@@ -154,6 +161,19 @@
             answertext.textContent = `Answer: ${answer.answer}`
         })
 
+        function countdown() {
+            let timebox = document.getElementById('countdown')
+            timebox.textContent = 10
+            let t = 9
+            let tid = setInterval(() => {
+                if (t <= 0) {
+                    clearInterval(tid)
+                    timebox.textContent = ""
+                }
+                timebox.textContent = t
+                t--
+            }, 1000)
+        }
 
         // addQuestion({
         //     "trigger": 9,

@@ -19,6 +19,13 @@
         
         video {
             max-width: 100%;
+            width: 100%;
+        }
+        
+        .results {
+            font-size: 24px;
+            line-height: 40px;
+            padding: 16px;
         }
     </style>
     <title>Document</title>
@@ -89,12 +96,19 @@
             updateResults(option)
         })
 
+        let total = 0
+
+        function perc(n) {
+            return Math.round((n / total) * 10000) / 100
+        }
+
         function updateResults(option) {
             results[option] += 1
+            total++
             resultsDiv.textContent =
-                `California: ${results.California} 
-                 Massachusetts: ${results.Massachusetts} 
-                 Utah: ${results.Utah}`
+                `California: ${perc(results.California)}%
+                 Massachusetts: ${perc(results.Massachusetts)}%
+                 Utah: ${perc(results.Utah)}%`
         }
     </script>
 </body>
